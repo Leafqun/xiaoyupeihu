@@ -10,14 +10,46 @@
 // +----------------------------------------------------------------------
 
 use think\Route;
+Route::any('/managerLogin', 'LoginController/login');
 
 Route::any('/login','UserController/login');
 Route::get('/logout','UserController/logout');
 Route::any('/register','UserController/register');
-Route::post('/updateUserPic','UserController/updateUserPic');
-Route::post('/updateUserPwd','UserController/updateUserPwd');
-Route::post('/updateUserPhone','UserController/updateUserPhone');
-Route::get('/getUserInfo','UserController/getUserInfo');
+Route::post('users/updateUserPic','UserController/updateUserPic');
+Route::any('users/updateUserName','UserController/updateUserName');
+Route::post('users/updateUserPwd','UserController/updateUserPwd');
+Route::post('users/updateUserPhone','UserController/updateUserPhone');
+Route::get('users/getUserInfo','UserController/getUserInfo');
+Route::get('users/getAllUsers','UserController/getAllUsers');
+Route::get('users/getAllGroupFromUser','UserController/getAllGroupFromUser');
+Route::get('users/getAllFriendFromUser','UserController/getAllFriendFromUser');
+Route::post('users/addFriend', 'UserController/addFriend');
+Route::post('users/deleteFriend', 'UserController/deleteFriend');
+
+Route::get('groups/getGroupList','GroupController/getGroupList');
+Route::get('groups/getGroupInfo','GroupController/getGroupInfo');
+Route::get('groups/getAllUserFromGroup','GroupController/getAllUserFromGroup');
+Route::post('groups/registerGroup', 'GroupController/registerGroup');
+Route::any('groups/joinGroup', 'GroupController/joinGroup');
+
+Route::get('posts/getPostList', 'PostController/getPostList');
+Route::any('posts/getPostListFromUser', 'PostController/getPostListFromUser');
+Route::get('posts/getPostInfo', 'PostController/getPostInfo');
+Route::get('posts/getPostPic', 'PostController/getPostPic');
+Route::post('posts/insertPost', 'PostController/insertPost');
+Route::any('posts/deletePost', 'PostController/deletePost');
+Route::any('posts/getPostListFromFriends','PostController/getPostListFromFriends');
+Route::any('posts/getPostListFromGroup','PostController/getPostListFromGroup');
+Route::any('posts/addLikes','PostController/addLikes');
+
+Route::any('devs/addDev', 'DevController/addDev');
+Route::any('devs/updateDevInfo', 'DevController/updateDevInfo');
+Route::any('devs/deleteDev', 'DevController/deleteDev');
+Route::any('devs/getDevList', 'DevController/getDevList');
+Route::get('devs/getDevInfo', 'DevController/getDevInfo');
+
+Route::get('comments/getCommentList', 'CommentController/getCommentList');
+Route::get('comments/insertComment', 'CommentController/insertComment');
 
 
 return [
