@@ -31,6 +31,8 @@ Route::get('groups/getGroupInfo','GroupController/getGroupInfo');
 Route::get('groups/getAllUserFromGroup','GroupController/getAllUserFromGroup');
 Route::post('groups/registerGroup', 'GroupController/registerGroup');
 Route::any('groups/joinGroup', 'GroupController/joinGroup');
+Route::any('groups/updateGroupPic', 'GroupController/updateGroupPic');
+Route::any('groups/updateGroupName', 'GroupController/updateGroupName');
 
 Route::get('posts/getPostList', 'PostController/getPostList');
 Route::any('posts/getPostListFromUser', 'PostController/getPostListFromUser');
@@ -40,6 +42,7 @@ Route::post('posts/insertPost', 'PostController/insertPost');
 Route::any('posts/deletePost', 'PostController/deletePost');
 Route::any('posts/getPostListFromFriends','PostController/getPostListFromFriends');
 Route::any('posts/getPostListFromGroup','PostController/getPostListFromGroup');
+Route::any('posts/getPostListByFiltering','PostController/getPostListByFiltering');
 Route::any('posts/addLikes','PostController/addLikes');
 
 Route::any('devs/addDev', 'DevController/addDev');

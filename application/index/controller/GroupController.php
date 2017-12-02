@@ -9,9 +9,12 @@
 namespace app\index\controller;
 
 
+use app\index\common\url;
 use app\index\model\Group;
 use think\Controller;
 use think\Db;
+use think\Exception;
+use think\exception\PDOException;
 use think\Request;
 
 class GroupController extends Controller
@@ -50,6 +53,8 @@ class GroupController extends Controller
         if(empty($group)) return ['msg' => 'group不存在'];
 
         $groupid = $group['groupid'];
+        $is_in_group = Db::table('user_group')->where(['id' => $id, 'groupid' => $groupid])->find();
+        if($is_in_group) return ['msg' => '已经加群'];
         $is_join = Db::table('user_group')->insert(['id' => $id, 'groupid' => $groupid]);
         if($is_join) {
             $is_add_1 = Db::table('groups')->where('groupid', $groupid)->setInc('total');
@@ -98,8 +103,48 @@ class GroupController extends Controller
         if($groupid){
             $userList = Db::table('user_group')->alias('ug')->join('users','users.id = ug.id')
                 ->join('groups','groups.groupid = ug.groupid')->where('ug.groupid', $groupid)
-                ->field('users.id, users.userid, users.name, ug.auth')->select();
+                ->field('users.id, users.userid, users.name, users.avatar, ug.auth')->select();
             return ['userList' => $userList];
         }
+    }
+    // 修改群组头像
+    public function updateGroupPic(Request $request) {
+        $groupid = $request->param('groupid');
+        $avatar = $request->param('avatar');
+        $pic = $request->file('pic');
+        if(empty($groupid) && empty($pic)) return ['msg' => '请求参数不全'];
+        $info = $pic->move(url::$fileURL, md5(date('YmdHis') . $pic->getInfo()['name']));
+        if($info) {
+            $filename = $info->getFilename();
+            // 删除旧文件
+            if($avatar) {
+                $oldFilePath = url::$fileURL . $avatar;
+                if(file_exists($oldFilePath)) unlink($oldFilePath);
+            }
+            // 更改
+            try {
+                $is_updata = Db::table('groups')->where('groupid', $groupid)->update(['avatar' => $filename]);
+                if($is_updata) return ['msg' => 'success'];
+                else return ['msg' => '更改失败'];
+            } catch (PDOException $e) {
+                return ['msg' => $e];
+            } catch (Exception $e) {
+                return ['msg' => $e];
+            }
+        }
+    }
+    // 修改群组名
+    public function updateGroupName(Request $request) {
+        $groupid = $request->param('groupid');
+        $group_name = $request->param('group_name');
+        if(empty($groupid) && empty($group_name)) return ['msg' => '请求参数不全'];
+        try {
+            $is_update = Db::table('groups')->where('groupid', $groupid)->update(['group_name' => $group_name]);
+            if($is_update) return ['msg' => 'success'];
+            else return ['msg' => '更改失败'];
+        } catch (PDOException $e) {
+        } catch (Exception $e) {
+        }
+
     }
 }

@@ -105,7 +105,7 @@ class PostController extends Controller
         if(empty($groupid)) return ;
         $user_id = Db::table('user_group')->where('groupid', 'in', $groupid)->column('id');
         if(empty($user_id)) return ;
-        $postList = Db::table('posts')->join('users u', 'u.id = posts.id')
+        $postList = Db::table('posts')->join('users u', 'u.id = posts.id')->order('create_time','desc')
             ->where('posts.id', 'in', $user_id)->field('u.id, u.userid, u.name, u.avatar, posts.*')
             ->paginate(5, false, [
             'page' => $currentPage,
@@ -142,7 +142,7 @@ class PostController extends Controller
             if($bool) {
                 foreach($pics as $pic){
                     if($pic){
-                        $info = $pic->rule('uniqid')->move(url::$fileURL);
+                        $info = $pic->move(url::$fileURL . $post['id'], md5( date('YmdHis') . $pic->getInfo()['name']));
                         if($info){
                             $filename = $info->getFilename();
                             if($filename){
@@ -167,8 +167,9 @@ class PostController extends Controller
         if(!empty($postids)){
             foreach ($postids as $postid){
                 $post_pics = Db::table('post_pic')->where('postid', $postid)->field('pic_name')->select();
+                $id = Db::table('posts')->where('postid', $postid)->column('id');
                 foreach ($post_pics as $post_pic){
-                    $fileurl = url::$fileURL . $post_pic['pic_name'];
+                    $fileurl = url::$fileURL . $id[0] . DS . $post_pic['pic_name'];
                     if (file_exists($fileurl)) unlink($fileurl);
                 }
                 Db::table('posts')->where('postid', $postid)->delete();

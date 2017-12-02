@@ -98,12 +98,17 @@ class UserController extends Controller
     }
     public function getUserInfo(Request $request){
         $userid = $request->param('userid');
+        $id = $request->param('id');
+        if(empty($userid) && empty($id)) return ['msg' => '请求参数不全'];
         if($userid){
-            $user = Db::table('users')->where('userid', $userid)
-                ->field('id,userid,name,password,avatar,tel_num,is_login')->find();
-            if($user) return ['msg' => 'success', 'user' => $user];
-            else return ['msg' => '获取失败'];
-        }else return ['msg' => '请求参数userid不存在'];
+            $map['userid'] = $userid;
+        }
+        if($id) {
+            $map['id'] = $id;
+        }
+        $user = Db::table('users')->where($map)
+            ->field('id,userid,name,password,avatar,tel_num,is_login')->find();
+        return ['msg' => 'success', 'user' => $user];
 
     }
     public function updateUserName(Request $request) {
@@ -133,16 +138,17 @@ class UserController extends Controller
         }else return ['msg' => '请求参数不存在'];
     }
     public function updateUserPic(Request $request){
+        $id = $request->param('id');
         $avatar = $request->param('avatar');
         $pic = $request->file('pic');
         $tip = null;
         if($pic) {
-            $info = $pic->rule('uniqid')->move(url::$fileURL);
+            $info = $pic->move(url::$fileURL . $id, md5( date('YmdHis' . $pic->getInfo()['name'])));
             if ($info) {
                 $filename = $info->getFilename();
                 //删除旧文件
                 if(!empty($avatar)){
-                    $fileurl = url::$fileURL . $avatar;
+                    $fileurl = url::$fileURL . $id . DS . $avatar;
                     if(file_exists($fileurl)) unlink($fileurl);
                 }
                 $avatar = $filename;
@@ -152,7 +158,7 @@ class UserController extends Controller
             }
         }else $tip =  '文件未上传或上传失败';
         if($tip === '文件存储成功'){
-            $bool = Db::table('users')->where('userid', $request->param('userid'))
+            $bool = Db::table('users')->where('id', $id)
                 ->update(['avatar' => $avatar]);
             if($bool) return ['msg' => 'success', 'tip' => 'ok', 'avatar' => $avatar];
             else $tip = '数据库更新失败';
@@ -190,7 +196,7 @@ class UserController extends Controller
         if($userid){
             $groupList = Db::table('user_group')->alias('ug')->join('users','users.id = ug.id')
                 ->join('groups','groups.groupid = ug.groupid')->where('ug.id', $userid)
-                ->field('groups.groupid, groups.group_name, ug.auth')->select();
+                ->field('groups.*')->select();
             return ['groupList' => $groupList];
         }
     }
