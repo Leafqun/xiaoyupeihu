@@ -234,4 +234,9 @@ class UserController extends Controller
             else return ['msg' => '数据删除失败'];
         }else return ['msg' => '请求参数id或者delete_id不存在'];
     }
+    public function getUserTotalNum(Request $request) {
+        $total_num = Db::table('users')->count();
+        if($total_num) return ['total' => $total_num];
+        else return ['msg' => 'error'];
+    }
 }

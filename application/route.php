@@ -25,6 +25,7 @@ Route::get('users/getAllGroupFromUser','UserController/getAllGroupFromUser');
 Route::get('users/getAllFriendFromUser','UserController/getAllFriendFromUser');
 Route::post('users/addFriend', 'UserController/addFriend');
 Route::post('users/deleteFriend', 'UserController/deleteFriend');
+Route::get('users/getUserTotalNum','UserController/getUserTotalNum');
 
 Route::get('groups/getGroupList','GroupController/getGroupList');
 Route::get('groups/getGroupInfo','GroupController/getGroupInfo');
@@ -50,6 +51,7 @@ Route::any('devs/updateDevInfo', 'DevController/updateDevInfo');
 Route::any('devs/deleteDev', 'DevController/deleteDev');
 Route::any('devs/getDevList', 'DevController/getDevList');
 Route::get('devs/getDevInfo', 'DevController/getDevInfo');
+Route::get('devs/getDevTotalNum', 'DevController/getDevTotalNum');
 
 Route::get('comments/getCommentList', 'CommentController/getCommentList');
 Route::get('comments/insertComment', 'CommentController/insertComment');

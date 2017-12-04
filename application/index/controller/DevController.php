@@ -131,4 +131,8 @@ class DevController extends Controller
             ->field('devs.*, g.groupid, g.group_name')->find();
         return ['dev' => $dev];
     }
+    public function getDevTotalNum(Request $request) {
+        $total = Db::table('devs')->count();
+        return ['total' => $total];
+    }
 }
