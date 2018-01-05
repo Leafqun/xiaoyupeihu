@@ -107,7 +107,9 @@ class UserController extends Controller
             $map['id'] = $id;
         }
         $user = Db::table('users')->where($map)
-            ->field('id,userid,name,password,avatar,tel_num,is_login')->find();
+            ->field('id,userid,name,password,avatar,tel_num,is_login,gender,city')->find();
+        $devs = Db::table('devs')->where('id', $user['id'])->field('devid, type')->select();
+        $user = $user + ['devList' => $devs];
         return ['msg' => 'success', 'user' => $user];
 
     }
@@ -238,5 +240,24 @@ class UserController extends Controller
         $total_num = Db::table('users')->count();
         if($total_num) return ['total' => $total_num];
         else return ['msg' => 'error'];
+    }
+    public function getActiveUserTotalNum(Request $request) {
+        $total = Db::table('users')->where('is_login', 1)->count();
+        return ['total' => $total];
+    }
+    public function getActiveUserCityStatistics(Request $request) {
+        $cities = Db::table('users')->column('city');
+        foreach ($cities as $city) {
+            if (empty($city)) $city = '未知';
+            if (empty($data[$city])) $data[$city] = 0;
+            $data[$city] = $data[$city] + 1;
+        }
+        $keys = array_keys($data);
+        $values = array_values($data);
+        for ($i = 0; $i < count($values); $i++) {
+            $cityList[$i]['name'] = $keys[$i];
+            $cityList[$i]['value'] = $values[$i];
+        }
+        return ['cityList' => $cityList];
     }
 }

@@ -72,6 +72,15 @@ class GroupController extends Controller
         }
         return 'error';
     }
+    public function getGroup(Request $request) {
+        $groupId = $request->param('groupid');
+        if(!empty($groupId)){
+            // 获取数据库中的group信息
+            $group = Db::table('groups')->alias('g')->join('devs d', 'g.groupid = d.groupid')->field('g.*, d.devid')->where('g.groupid', $groupId)->find();
+            return ['group' => $group];
+        }
+        return 'error';
+    }
     // 获取某一分页所有group信息
     public function getGroupList(Request $request){
         $currentPage = $request->param('currentPage');

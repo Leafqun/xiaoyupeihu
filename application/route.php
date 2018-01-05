@@ -11,6 +11,9 @@
 
 use think\Route;
 Route::any('/managerLogin', 'LoginController/login');
+Route::any('/updatePwd', 'LoginController/updatePwd');
+Route::any('/getLoginInfo', 'LoginController/getLoginInfo');
+Route::any('/updateName', 'LoginController/updateName');
 
 Route::any('/login','UserController/login');
 Route::get('/logout','UserController/logout');
@@ -26,9 +29,12 @@ Route::get('users/getAllFriendFromUser','UserController/getAllFriendFromUser');
 Route::post('users/addFriend', 'UserController/addFriend');
 Route::post('users/deleteFriend', 'UserController/deleteFriend');
 Route::get('users/getUserTotalNum','UserController/getUserTotalNum');
+Route::get('users/getActiveUserTotalNum','UserController/getActiveUserTotalNum');
+Route::get('users/getActiveUserCityStatistics','UserController/getActiveUserCityStatistics');
 
 Route::get('groups/getGroupList','GroupController/getGroupList');
 Route::get('groups/getGroupInfo','GroupController/getGroupInfo');
+Route::get('groups/getGroup','GroupController/getGroup');
 Route::get('groups/getAllUserFromGroup','GroupController/getAllUserFromGroup');
 Route::post('groups/registerGroup', 'GroupController/registerGroup');
 Route::any('groups/joinGroup', 'GroupController/joinGroup');
@@ -45,8 +51,15 @@ Route::any('posts/getPostListFromFriends','PostController/getPostListFromFriends
 Route::any('posts/getPostListFromGroup','PostController/getPostListFromGroup');
 Route::any('posts/getPostListByFiltering','PostController/getPostListByFiltering');
 Route::any('posts/addLikes','PostController/addLikes');
+Route::get('posts/getMonthPostTotalNum','PostController/getMonthPostTotalNum');
+Route::get('posts/getTodayPostNum','PostController/getTodayPostNum');
+Route::any('posts/getLastWeekPosts','PostController/getLastWeekPosts');
+Route::any('posts/getPostNumByMonth','PostController/getPostNumByMonth');
+Route::any('posts/get7DaysWebsiteFlow','PostController/get7DaysWebsiteFlow');
 
 Route::any('devs/addDev', 'DevController/addDev');
+Route::any('devs/bindDev', 'DevController/bindDev');
+Route::any('devs/isDevBinded', 'DevController/isDevBinded');
 Route::any('devs/updateDevInfo', 'DevController/updateDevInfo');
 Route::any('devs/deleteDev', 'DevController/deleteDev');
 Route::any('devs/getDevList', 'DevController/getDevList');
@@ -56,6 +69,7 @@ Route::get('devs/getDevTotalNum', 'DevController/getDevTotalNum');
 Route::get('comments/getCommentList', 'CommentController/getCommentList');
 Route::get('comments/insertComment', 'CommentController/insertComment');
 
+Route::any('alarm/getAlarmList', 'AlarmController/getAlarmList');
 
 return [
     '__pattern__' => [

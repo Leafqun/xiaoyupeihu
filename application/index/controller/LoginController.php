@@ -28,7 +28,7 @@ class LoginController extends Controller
             $user = Db::table('manager')->where('manager_name', $userName)->find();
             if ($user) {
                 if ($userPwd === $user['password']) {
-                    return array('msg' => 'success');
+                    return array('msg' => 'success', 'loginId' => $user['managerid']);
                 } else {
                     return array('msg' => '密码错误');
                 }
@@ -36,5 +36,30 @@ class LoginController extends Controller
                 return array('msg' => '用户名不存在');
             }
         }
+    }
+    public function getLoginInfo(Request $request){
+        $loginId = $request->param('loginId');
+        if (empty($loginId)) return ['msg' => 'error'];
+        $login = Db::table('manager')->where('managerid', $loginId)->find();
+        return ['login' => $login];
+    }
+    public function updateName(Request $request) {
+        $loginId = $request->param('loginId');
+        $name = $request->param('name');
+        if (empty($name) || empty($loginId)) return ['msg' => 'error'];
+        $is_update_name = Db::table('manager')->where('managerid', $loginId)->update(['manager_name' => $name]);
+        if ($is_update_name) return ['msg' => 'success'];
+        else return ['msg' => 'error2'];
+    }
+    public function updatePwd(Request $request) {
+        $loginId= $request->param('loginId');
+        $oldPwd = $request->param('oldPwd');
+        $newPwd = $request->param('newPwd');
+        if(empty($loginId) || empty($oldPwd) || empty($newPwd)) return ['msg' => '请求参数不全'];
+        $pwd = Db::table('manager')->where('managerid', $loginId)->column('password');
+        if($pwd[0] != $oldPwd) return ['msg' => '原密码错误'];
+        $is_update = Db::table('manager')->where('managerid', $loginId)->update(['password' => $newPwd]);
+        if($is_update) return ['msg' => 'success'];
+        else return ['msg' => 'error'];
     }
 }

@@ -28,25 +28,34 @@ class PostController extends Controller
         if(empty($currentPage)) return ['msg' => '当前页数的参数为空'];
         $userName = $request->param('userName');
         $userid = $request->param('userid');
+        $tel_num = $request->param('tel_num');
         $startTime = $request->param('startTime');
         $endTime = $request->param('endTime');
+        $a = $b = false;
         if ($userName) {
             $id = Db::table('users')->where('name', $userName)->field('id')->find();
             $map['posts.id'] = $id['id'];
-        } else if ($userid) {
+        } else if ($tel_num) {
+            $id = Db::table('users')->where('tel_num', $tel_num)->field('id')->find();
+            $map['posts.id'] = $id['id'];
+        }else if ($userid) {
             $id = Db::table('users')->where('userid', $userid)->field('id')->find();
             $map['posts.id'] = $id['id'];
-        } else if ($startTime && $endTime) {
+        } else {
+            $a = true;
+        }
+        if ($startTime && $endTime) {
             $map['posts.create_time'] = ['between time', [$startTime, $endTime]];
         } else if ($startTime) {
             $map['posts.create_time'] = ['>= time', $startTime];
         } else if ($endTime) {
             $map['posts.create_time'] = ['<= time', $endTime];
         } else {
-            $map = '1 = 1';
+            $b = true;
         }
+        if ($a && $b) $map = '1=1';
         $postList = Db::table('posts')->where($map)->join('users u', 'u.id = posts.id')
-            ->field('users.name, posts.*, users.userid')->order('create_time', 'desc')
+            ->field('users.name, posts.*, users.userid, users.avatar')->order('create_time', 'desc')
             ->paginate(5, false, [
                 'page' => $currentPage,
                 'type' => 'bootstrap',
@@ -54,6 +63,8 @@ class PostController extends Controller
             ])->each(function ($item, $key) {
                 $picList = Db::table('post_pic')->where('post_pic.postid', $item['postid'])->select();
                 $item['post_pic'] = $picList;
+                $comment_num = Db::table('comments')->where('comments.postid', $item['postid'])->count();
+                $item['comment_num'] = $comment_num;
                 return $item;
             });
 
@@ -70,6 +81,8 @@ class PostController extends Controller
             ])->each(function($item, $key){
                 $picList = Db::table('post_pic')->where('post_pic.postid', $item['postid'])->select();
                 $item['post_pic'] = $picList;
+                $comment_num = Db::table('comments')->where('comments.postid', $item['postid'])->count();
+                $item['comment_num'] = $comment_num;
                 return $item;
             });
             return ['postList' => $postList];
@@ -183,5 +196,97 @@ class PostController extends Controller
         $is_like_add_1 = Db::table('posts')->where('postid', $postid)->setInc('like_num');
         if($is_like_add_1) return ['msg' => 'success'];
         else return ['msg' => '点赞失败'];
+    }
+    public function getMonthPostTotalNum(Request $request) {
+        $total = Db::table('posts')->whereTime('create_time','month')->count();
+        return ['total' => $total];
+    }
+    public function getTodayPostNum(Request $request) {
+        $postNum = Db::table('posts')->whereTime('create_time', 'today')->count();
+        return ['postNum' => $postNum];
+    }
+    public function getLastWeekPosts(Request $request) {
+        $startDate = $request->param('startDate');
+        $endDate = $request->request('endDate');
+        $startdate = null;
+        if (empty($startDate) || empty($endDate)) {
+            $posts = Db::table('posts')->whereTime('create_time', '-15 days')->column('create_time');
+            $startdate = time();
+            $days = 30;
+            $msg = '未选择日期';
+        }
+        else {
+            $posts = Db::table('posts')->whereTime('create_time', 'between', [$startDate, $endDate])->column('create_time');
+            $startdate = strtotime($endDate);
+            $days = floor((strtotime($endDate)-strtotime($startDate))/86400);
+            $msg = '已选择日期';
+        }
+        foreach ($posts as $post) {
+            $date = substr($post, 0, 10);
+            if (empty($data[$date])) $data[$date] = 0;
+            $data[$date] = $data[$date] + 1;
+        };
+        for ($i = 0; $i < $days; $i++) {
+            $enddate = date('Y-m-d',strtotime("-" . ($i + 1) ."day",$startdate));
+            if (empty($data[$enddate])) $data[$enddate] = 0;
+            $postList[$i]['name'] = $enddate;
+            $postList[$i]['value'] = $data[$enddate];
+        }
+        return ['postNum' => array_reverse($postList), 'msg' => $msg];
+    }
+    public function getPostNumByMonth(Request $request) {
+        $startMonth = $request->param('startMonth');
+        $endMonth = $request->param('endMonth');
+        if (empty($startMonth) || empty($endMonth)) {
+            $posts = Db::table('posts')->whereTime('create_time', '-10 months')->column('create_time');
+            $months = 10;
+            $msg = '未选择日期';
+            $startmonth = time();
+        } else {
+            $posts = Db::table('posts')->whereTime('create_time', 'between', [$startMonth, $endMonth])->column('create_time');
+            $startmonth = strtotime($endMonth);
+            $months = floor((strtotime($endMonth)-strtotime($startMonth))/(86400*30));
+            $msg = '已选择日期';
+        }
+        foreach ($posts as $post) {
+            $date = substr($post, 0, 7);
+            if (empty($data[$date])) $data[$date] = 0;
+            $data[$date] = $data[$date] + 1;
+        };
+        for ($i = 0; $i < $months; $i++) {
+            $endmonth = date('Y-m',strtotime("-" . ($i + 1) ."months",$startmonth));
+            if (empty($data[$endmonth])) $data[$endmonth] = 0;
+            $postList[$i]['name'] = $endmonth;
+            $postList[$i]['value'] = $data[$endmonth];
+        }
+        return ['postNum' => array_reverse($postList), 'msg' => $msg];
+    }
+    public function get7DaysWebsiteFlow(Request $request) {
+        $startdate = time();
+        $output = [];
+        for ($i = 0; $i < 30; $i++) {
+            $enddate = date('Ymd',strtotime("-" . $i ."day",$startdate));
+            // $filePath = "C:\\Users\\Leafqun\\Desktop\\access_" . $enddate  . '.log';
+            $filePath = "/usr/local/apache/logs/access_" . $enddate  . '.log';
+            if (!file_exists($filePath)) {
+                $output[$enddate] = 0;
+                continue;
+            }
+            $myfile = fopen($filePath, "r") or die("Unable to open file!");
+            $t = 0;
+            while(!feof($myfile)) {
+                $data = strstr(fgets($myfile), ' 200 ');
+                if ($data) {
+                    $lastIndex = strpos($data," \"");
+                    $flow = trim(substr($data, 4, $lastIndex - 4));
+                    if (is_numeric($flow)){
+                        $t = $t + $flow;
+                    }
+                }
+            }
+            fclose($myfile);
+            $output[$enddate] = $t;
+        }
+        return ['flow' => $output];
     }
 }

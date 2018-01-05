@@ -11,6 +11,9 @@ namespace app\index\controller;
 
 use think\Controller;
 use think\Db;
+use think\Exception;
+use think\exception\DbException;
+use think\exception\PDOException;
 use think\Request;
 
 class DevController extends Controller
@@ -22,31 +25,17 @@ class DevController extends Controller
     }
     public function addDev(Request $request) {
         $devid = $request->param('devid');
+        $type = $request->param('type');
         if(empty($devid)) return ['msg' => 'devid参数为空'];
 
         // 判断设备是否已经注册
         $dev = Db::table('devs')->where('devid', $devid)->find();
         if($dev) return ['msg' => 'dev已注册'];
 
-        // 判断用户是否已经注册
-        $devUser = Db::table('users')->where('userid', $devid)->find();
-        if($devUser) return ['msg' => 'dev用户已注册'];
-
-        // 用户添加
-        $id = Db::table('users')->insertGetId(['userid' => $devid, 'name' => $devid, 'password' => 123456]);
-        if(empty($id)) return ['msg' => 'dev用户注册失败'];
-
-        // 群组注册
         $create_time = date('Y-m-d H:i:s',time());
-        $groupid = Db::table('groups')->insertGetId(['group_name' => $devid, 'create_time' => $create_time, 'total' => 1]);
-        if(empty($groupid)) return ['dev群组创建失败'];
-
-        // dev用户加入dev群组，并设为群主
-        $isAddGroup = Db::table('user_group')->insert(['groupid' => $groupid, 'id' => $id, 'auth' => 2]);
-        if(empty($isAddGroup)) return ['msg' => '设置dev用户加入群组失败'];
 
         // dev添加
-        $isCreateDev = Db::table('devs')->insert(['devid' => $devid, 'groupid' => $groupid, 'create_time' => $create_time]);
+        $isCreateDev = Db::table('devs')->insert(['devid' => $devid, 'create_time' => $create_time, 'type' => $type, 'max' => 10]);
         if($isCreateDev) return ['msg' => 'success'];
         else return ['msg' => 'dev添加失败'];
     }
@@ -99,23 +88,73 @@ class DevController extends Controller
         }
         return ['msg' => 'success'];
     }
+    public function bindDev(Request $request) {
+        $id = $request->param('id');
+        $devid = $request->param('devid');
+        if (empty($id) || empty($devid)) return ['msg' => '请求参数为空'];
+        // bind
+        try {
+            $dev = Db::table('devs')->where('devid', $devid)->find();
+            if ($dev['id']) return ['msg' => '已绑定'];
+            //绑定设备
+            $isBind = Db::table('devs')->where('devid', $devid)->update(['id' => $id]);
+            if (empty($isBind)) return ['msg' => '设备绑定用户失败'];
+            // 创建群组
+            $create_time = date('Y-m-d H:i:s', time());
+            $groupid = Db::table('groups')->insertGetId(['did' => $dev['did'], 'create_time' => $create_time, 'group_name' => $devid, 'total' => 1]);
+            if (empty($groupid)) return ['msg' => '群组创建失败'];
+            // 群组与设备绑定
+            $dev_is_update = Db::table('devs')->where('devid', $devid)->update(['groupid' => $groupid]);
+            if (empty($dev_is_update)) return ['msg' => '群组与设备绑定失败'];
+            // 用户加入群组，并设为群主
+            $is_user_add_group = Db::table('user_group')->insert(['id' => $id, 'groupid' => $groupid, 'auth' => 2]);
+            if ($is_user_add_group) return ['msg' => 'success'];
+            else return ['msg' => '用户加入群组失败'];
+        } catch (PDOException $e) {
+
+        } catch (Exception $e) {
+
+        }
+    }
     public function getDevList(Request $request) {
         $currentPage = $request->param('currentPage');
         if(empty($currentPage)) return ['msg' => '请求页数未知'];
         // 查询条件devid
         $devid = $request->param('devid');
+        $type = $request->param('type');
+        $isBind = $request->param('isBind');
+        $orderByMax = $request->param('orderByMax');
+        $orderByCreateTime = $request->param('orderByCreateTime');
+        $startTime = $request->param('startTime');
+        $endTime = $request->param('endTime');
+        $isFilter = true;
+        if (empty($devid) && empty($type) && empty($isBind) && empty($orderByMaxe) && empty($startTime) && empty($endTime)) $isFilter = false;
         if($devid) {
             $map['devid'] = $devid;
-        }else {
+        }
+        if ($type) $map['type'] = $type;
+        if ($orderByMax === 'descend') $order = 'max desc';
+        else if ($orderByMax === 'ascend') $order = 'max asc';
+        else if ($orderByCreateTime === 'ascend') $order = 'create_time asc';
+        else $order = 'create_time desc';
+        if ($isBind === '1') $map['id'] = ['exp', 'is not null'];
+        if ($isBind === '2') $map['id'] = null;
+        if ($startTime && $endTime) {
+            $map['create_time'] = ['between time', [$startTime, $endTime]];
+        }
+        if (!$isFilter) {
             $map = '1 = 1';
         }
-        $devList = Db::table('devs')->where($map)->order('did', 'desc')
-            ->paginate(10, false, [
-                'page' => $currentPage,
-                'type'     => 'bootstrap',
-                'var_page' => 'page'
-            ]);
-        return ['devList' => $devList];
+        try {
+            $devList = Db::table('devs')->where($map)->order($order)
+                ->paginate(15, false, [
+                    'page' => $currentPage,
+                    'type' => 'bootstrap',
+                    'var_page' => 'page'
+                ]);
+            return ['devList' => $devList];
+        } catch (DbException $e) {
+        }
     }
     public function getDevInfo(Request $request) {
         $devid = $request->param('devid');
@@ -127,9 +166,19 @@ class DevController extends Controller
         if($did) {
             $map['did'] = $did;
         }
-        $dev = Db::table('devs')->join('groups g', 'g.groupid = devs.groupid')->where($map)
-            ->field('devs.*, g.groupid, g.group_name')->find();
+        $user = $group = [];
+        $dev = Db::table('devs')->where($map)->find();
+        if ($dev['id']) $user = Db::table('users')->where('id', $dev['id'])->field('userid, name')->find();
+        if ($dev['groupid']) $group = Db::table('groups')->where('groupid', $dev['groupid'])->field('groupid, group_name')->find();
+        $dev = $dev + $user + $group;
         return ['dev' => $dev];
+    }
+    public function isDevBinded(Request $request) {
+        $devid = $request->param('devid');
+        if (empty($devid)) return ['msg' => '请求参数为空'];
+        $dev = Db::table('devs')->where('devid', $devid)->find();
+        if (empty($dev['id'])) return ['msg' => '未绑定'];
+        else return ['msg' => '已绑定'];
     }
     public function getDevTotalNum(Request $request) {
         $total = Db::table('devs')->count();
