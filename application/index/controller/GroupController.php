@@ -88,17 +88,29 @@ class GroupController extends Controller
         $devid = $request->param('devid');
         $group_name = $request->param('group_name');
         $groupid = $request->param('groupid');
+        $orderByTotal = $request->param('orderByTotal');
+        $orderByCreateTime = $request->param('orderByCreateTime');
+        $isFilter = true;
+        if (empty($devid) && empty($group_name) && empty($groupid)) $isFilter = false;
         if($devid) {
             $map['devid'] = $devid;
-        } else if($groupid) {
+        }
+        if($groupid) {
             $map['groupid'] = $groupid;
-        } else if ($group_name) {
+        }
+        if ($group_name) {
             $map['group_name'] = $group_name;
-        } else {
+        }
+        // paixu
+        if ($orderByTotal === 'descend') $order = 'total desc';
+        else if ($orderByTotal === 'ascend') $order = 'total asc';
+        else if ($orderByCreateTime === 'ascend') $order = 'create_time asc';
+        else $order = 'create_time desc';
+        if (!$isFilter){
             $map = '1 = 1';
         }
         $groupList = Db::table('groups')->alias('g')->join('devs d', 'g.groupid = d.groupid')
-            ->where($map)->field('d.devid, g.*')->order('groupid', 'desc')
+            ->where($map)->field('d.devid, g.*')->order($order)
             ->paginate(15, false, [
                 'page' => $currentPage,
                 'type'     => 'bootstrap',

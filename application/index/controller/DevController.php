@@ -128,7 +128,7 @@ class DevController extends Controller
         $startTime = $request->param('startTime');
         $endTime = $request->param('endTime');
         $isFilter = true;
-        if (empty($devid) && empty($type) && empty($isBind) && empty($orderByMaxe) && empty($startTime) && empty($endTime)) $isFilter = false;
+        if (empty($devid) && empty($type) && empty($isBind) && empty($startTime) && empty($endTime)) $isFilter = false;
         if($devid) {
             $map['devid'] = $devid;
         }
@@ -170,7 +170,7 @@ class DevController extends Controller
         $dev = Db::table('devs')->where($map)->find();
         if ($dev['id']) $user = Db::table('users')->where('id', $dev['id'])->field('userid, name')->find();
         if ($dev['groupid']) $group = Db::table('groups')->where('groupid', $dev['groupid'])->field('groupid, group_name')->find();
-        $dev = $dev + $user + $group;
+        if ($dev) $dev = $dev + $user + $group;
         return ['dev' => $dev];
     }
     public function isDevBinded(Request $request) {

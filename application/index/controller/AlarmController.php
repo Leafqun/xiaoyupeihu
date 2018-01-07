@@ -30,7 +30,8 @@ class AlarmController extends Controller
         $isFilter = false;
         $map = null;
         if ($city) {
-            $map['city'] = $city;
+            if (is_numeric($city)) $map['devid'] = $city;
+            else $map['city'] = $city;
             $isFilter = true;
         }
         if ($startTime && $endTime) {
