@@ -25,7 +25,7 @@ class CommentController extends Controller
         $postid = $request->param('postid');
         if(empty($postid)) return ['msg' => '请求参数为空'];
         $commentList = Db::table('comments')->alias('c')->join('users u', 'u.id = c.id')
-            ->where('c.postid', $postid)->field('c.*, u.name, u.avatar')->select();
+            ->where('c.postid', $postid)->field('c.*, u.nickname, u.avatar')->select();
         return ['commentList' => $commentList];
     }
     public function insertComment(Request $request) {

@@ -47,6 +47,7 @@ class GroupController extends Controller
     public function joinGroup(Request $request){
         $devid = $request->param('devid');
         $id = $request->param('id');
+        $lord_id = $request->param('lord_id');
         if(empty($devid) && empty($id)) return ['msg' => '请求参数不全'];
         // 判断所加群组是否存在
         $group = Db::table('devs')->where('devid', $devid)->field('groupid')->find();
@@ -58,7 +59,12 @@ class GroupController extends Controller
         $is_join = Db::table('user_group')->insert(['id' => $id, 'groupid' => $groupid]);
         if($is_join) {
             $is_add_1 = Db::table('groups')->where('groupid', $groupid)->setInc('total');
-            if($is_add_1) return ['msg' => 'success'];
+            if($is_add_1) {
+                // 设置集群号
+                $cluster_id = Db::table('users')->where('id', $lord_id)->find();
+                Db::table('users')->where('id', $id)->update(['cluster_id' => $cluster_id['cluster_id'], 'unit' => $cluster_id['cluster_id']]);
+                return ['msg' => 'success'];
+            }
             else return ['msg' => '群组人数未更新'];
         }
         else return ['msg' => '加入失败'];
@@ -124,7 +130,7 @@ class GroupController extends Controller
         if($groupid){
             $userList = Db::table('user_group')->alias('ug')->join('users','users.id = ug.id')
                 ->join('groups','groups.groupid = ug.groupid')->where('ug.groupid', $groupid)
-                ->field('users.id, users.userid, users.name, users.avatar, ug.auth')->select();
+                ->field('users.id, users.userid, users.nickname, users.name, users.avatar, ug.auth')->select();
             return ['userList' => $userList];
         }
     }

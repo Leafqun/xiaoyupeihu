@@ -108,7 +108,12 @@ class DevController extends Controller
             if (empty($dev_is_update)) return ['msg' => '群组与设备绑定失败'];
             // 用户加入群组，并设为群主
             $is_user_add_group = Db::table('user_group')->insert(['id' => $id, 'groupid' => $groupid, 'auth' => 2]);
-            if ($is_user_add_group) return ['msg' => 'success'];
+            if ($is_user_add_group) {
+                // 设置集群号
+                $cluster_id = Db::table('users')->max('cluster_id');
+                Db::table('users')->where('id', $id)->update(['cluster_id' => $cluster_id + 1, 'unit' => $cluster_id + 1]);
+                return ['msg' => 'success'];
+            }
             else return ['msg' => '用户加入群组失败'];
         } catch (PDOException $e) {
 
@@ -168,7 +173,7 @@ class DevController extends Controller
         }
         $user = $group = [];
         $dev = Db::table('devs')->where($map)->find();
-        if ($dev['id']) $user = Db::table('users')->where('id', $dev['id'])->field('userid, name')->find();
+        if ($dev['id']) $user = Db::table('users')->where('id', $dev['id'])->field('userid, nickname')->find();
         if ($dev['groupid']) $group = Db::table('groups')->where('groupid', $dev['groupid'])->field('groupid, group_name')->find();
         if ($dev) $dev = $dev + $user + $group;
         return ['dev' => $dev];

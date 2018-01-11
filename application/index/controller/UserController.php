@@ -75,6 +75,9 @@ class UserController extends Controller
         //获取请求中的用户名和密码
         $username = $request->param('username');
         $password = $request->param('password');
+        $random = (string) round(mt_rand()/mt_getrandmax(), 12);
+        $salt = substr(sha1($random), 0 , 5);
+        $saltpassword = 'sha1$' . $salt . '$' . sha1($salt . $password);
         // 根据请求用户名获取数据库中的用户信息，有则返回用户信息，否则返回Null
         if($username) {
             $user1 = Db::table('users')->where('tel_num', $username)->field('tel_num')->find();
@@ -83,14 +86,18 @@ class UserController extends Controller
         //判断用户名是否已经注册
         if($user1) $msg = '手机号已注册';
         else{
+            $userid = Db::table('users')->max('userid');
+            $userid = (substr((string)$userid, 0, 14) + 1) . '4992';
+            $random = (string) round(mt_rand()/mt_getrandmax(), 12);
+            $salt = substr(sha1($random), 0 , 5);
+            $saltpassword = 'sha1$' . $salt . '$' . sha1($salt . $password);
             //添加用户
             $bool = Db::table('users')
-                ->insert(['name' => $username, 'password' => $password,
-                    'tel_num' => $username, 'userid' => uuid::uuid(), 'phone_num' => '1', 'admin' => '45']);
+                ->insert(['name' => $username, 'password' => $saltpassword,
+                    'nickname' => $username, 'userid' => $userid, 'phone_num' => $username, 'admin' => '93']);
             if($bool) {
                 $msg = '注册成功';
-                $id = Db::table('users')->field('id')->where('tel_num', $username)->find();
-                Db::table('friends')->insert(['id' => $id['id'], 'use_id' => $id['id']]);
+                // $id = Db::table('users')->field('id')->where('tel_num', $username)->find();
             }
             else $msg = '注册失败';
         }
@@ -107,7 +114,7 @@ class UserController extends Controller
             $map['id'] = $id;
         }
         $user = Db::table('users')->where($map)
-            ->field('id,userid,name,password,avatar,tel_num,is_login,gender,city')->find();
+            ->field('id,userid,name,password,avatar,nickname,is_login,gender,city')->find();
         $devs = Db::table('devs')->where('id', $user['id'])->field('devid, type')->select();
         $user = $user + ['devList' => $devs];
         return ['msg' => 'success', 'user' => $user];
@@ -117,7 +124,7 @@ class UserController extends Controller
         $userid = $request->request('userid');
         $userName = $request->param('name');
         if ($userName) {
-            Db::table('users')->where('userid', $userid)->update(['name' => $userName]);
+            Db::table('users')->where('userid', $userid)->update(['nickname' => $userName]);
             return ['msg' => 'success'];
         }
     }
@@ -134,7 +141,7 @@ class UserController extends Controller
         $tel_num = $request->param('tel_num');
         if($tel_num){
             $bool = Db::table('users')->where('userid', $request->param('userid'))
-                ->update(['tel_num' => $tel_num]);
+                ->update(['name' => $tel_num, 'phone_num' => $tel_num]);
             if($bool) return ['msg' => 'success'];
             else return ['msg' => '更新失败'];
         }else return ['msg' => '请求参数不存在'];
@@ -175,15 +182,15 @@ class UserController extends Controller
         $userid = $request->param('userid');
         $name = $request->param('name');
         if($tel_num) {
-            $map['tel_num'] = $tel_num;
+            $map['name'] = $tel_num;
         } else if($userid) {
             $map['userid'] = $userid;
         } else if($name) {
-            $map['name'] = $name;
+            $map['nickname'] = $name;
         } else {
             $map = '1 = 1';
         }
-        $userList = Db::table('users')->field('id, userid, name, password, tel_num, is_login')
+        $userList = Db::table('users')->field('id, userid, name, password, nickname, is_login')
             ->order('id', 'desc')->where($map)
             ->paginate(15, false, [
                 'page' => $currentPage,
@@ -210,7 +217,7 @@ class UserController extends Controller
                 ->join('users u2','u2.id = friends.use_id')
                 ->where('f.id', $userid)
                 ->where('f.use_id','<>',$userid)
-                ->field('u2.id, u2.userid, u2.name, u2.tel_num')->select();
+                ->field('u2.id, u2.userid, u2.name, u2.nickname')->select();
             return ['userList' => $user];
         }
     }

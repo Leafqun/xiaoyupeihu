@@ -33,10 +33,10 @@ class PostController extends Controller
         $endTime = $request->param('endTime');
         $a = $b = false;
         if ($userName) {
-            $id = Db::table('users')->where('name', $userName)->field('id')->find();
+            $id = Db::table('users')->where('nickname', $userName)->field('id')->find();
             $map['posts.id'] = $id['id'];
         } else if ($tel_num) {
-            $id = Db::table('users')->where('tel_num', $tel_num)->field('id')->find();
+            $id = Db::table('users')->where('name', $tel_num)->field('id')->find();
             $map['posts.id'] = $id['id'];
         }else if ($userid) {
             $id = Db::table('users')->where('userid', $userid)->field('id')->find();
@@ -55,7 +55,7 @@ class PostController extends Controller
         }
         if ($a && $b) $map = '1=1';
         $postList = Db::table('posts')->where($map)->join('users u', 'u.id = posts.id')
-            ->field('users.name, posts.*, users.userid, users.avatar')->order('create_time', 'desc')
+            ->field('users.nickname, posts.*, users.userid, users.avatar')->order('create_time', 'desc')
             ->paginate(5, false, [
                 'page' => $currentPage,
                 'type' => 'bootstrap',
@@ -95,7 +95,7 @@ class PostController extends Controller
            $postList = Db::table('friends')->alias('f')
                ->join('users u', 'f.use_id = u.id')
                ->join('posts p', 'p.id = u.id')
-               ->field('u.id, u.userid, u.name, u.avatar, p.*')
+               ->field('u.id, u.userid, u.nickname, u.avatar, p.*')
                ->where('f.id', $userid)->order('create_time', 'desc')
                ->paginate(5, false, [
                    'page' => $currentPage,
@@ -119,7 +119,7 @@ class PostController extends Controller
         $user_id = Db::table('user_group')->where('groupid', 'in', $groupid)->column('id');
         if(empty($user_id)) return ;
         $postList = Db::table('posts')->join('users u', 'u.id = posts.id')->order('create_time','desc')
-            ->where('posts.id', 'in', $user_id)->field('u.id, u.userid, u.name, u.avatar, posts.*')
+            ->where('posts.id', 'in', $user_id)->field('u.id, u.userid, u.nickname, u.avatar, posts.*')
             ->paginate(5, false, [
             'page' => $currentPage,
             'type'     => 'bootstrap',
@@ -137,7 +137,7 @@ class PostController extends Controller
         $postid = $request->param('postid');
         if(empty($postid)) return ['msg' => '请求参数为空'];
         $post = Db::table('posts')->join('users', 'users.id = posts.id')
-            ->where('posts.postid', $postid)->field('posts.*, users.name, users.avatar')->find();
+            ->where('posts.postid', $postid)->field('posts.*, users.nickname, users.avatar')->find();
         if ($post) return ['post' => $post];
         else return ['msg' => '数据库获取数据失败'];
 
