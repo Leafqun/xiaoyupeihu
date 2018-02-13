@@ -143,6 +143,7 @@ class PostController extends Controller
 
     }
     public function insertPost(Request $request){
+        if ($request->isOptions()) return ;
         $post = $request->param();
         $picfiles = $request->file()['file'];
         if(is_array($picfiles)) $pics = $picfiles;
@@ -239,9 +240,10 @@ class PostController extends Controller
         $endMonth = $request->param('endMonth');
         if (empty($startMonth) || empty($endMonth)) {
             $posts = Db::table('posts')->whereTime('create_time', '-10 months')->column('create_time');
-            $months = 10;
+            $months = 12;
             $msg = '未选择日期';
-            $startmonth = time();
+            $BeginDate=date('Y-m-01', strtotime(date("Y-m-d")));
+            $startmonth = strtotime("$BeginDate +1 month -2 day");
         } else {
             $posts = Db::table('posts')->whereTime('create_time', 'between', [$startMonth, $endMonth])->column('create_time');
             $startmonth = strtotime($endMonth);
@@ -253,8 +255,14 @@ class PostController extends Controller
             if (empty($data[$date])) $data[$date] = 0;
             $data[$date] = $data[$date] + 1;
         };
+        $flag = false;
         for ($i = 0; $i < $months; $i++) {
-            $endmonth = date('Y-m',strtotime("-" . ($i + 1) ."months",$startmonth));
+            $endmonth = $i === 0 ? date('Y-m', $startmonth) : date('Y-m',strtotime("-" . ($i) ." months", $startmonth));
+            if ($flag) {
+                $endmonth = substr($endmonth, 0, 5) . '02' . substr($endmonth, 7, 3);
+                $flag = false;
+            }
+            if (substr($endmonth, 5 , 2) === '03') $flag = true;
             if (empty($data[$endmonth])) $data[$endmonth] = 0;
             $postList[$i]['name'] = $endmonth;
             $postList[$i]['value'] = $data[$endmonth];

@@ -75,12 +75,9 @@ class UserController extends Controller
         //获取请求中的用户名和密码
         $username = $request->param('username');
         $password = $request->param('password');
-        $random = (string) round(mt_rand()/mt_getrandmax(), 12);
-        $salt = substr(sha1($random), 0 , 5);
-        $saltpassword = 'sha1$' . $salt . '$' . sha1($salt . $password);
         // 根据请求用户名获取数据库中的用户信息，有则返回用户信息，否则返回Null
         if($username) {
-            $user1 = Db::table('users')->where('tel_num', $username)->field('tel_num')->find();
+            $user1 = Db::table('users')->where('name', $username)->field('name')->find();
         }else $user1 = null;
         $msg = null;
         //判断用户名是否已经注册
@@ -97,7 +94,6 @@ class UserController extends Controller
                     'nickname' => $username, 'userid' => $userid, 'phone_num' => $username, 'admin' => '93']);
             if($bool) {
                 $msg = '注册成功';
-                // $id = Db::table('users')->field('id')->where('tel_num', $username)->find();
             }
             else $msg = '注册失败';
         }
@@ -115,10 +111,17 @@ class UserController extends Controller
         }
         $user = Db::table('users')->where($map)
             ->field('id,userid,name,password,avatar,nickname,is_login,gender,city')->find();
-        $devs = Db::table('devs')->where('id', $user['id'])->field('devid, type')->select();
+        $devs = Db::table('devs')->where(['id' => $user['id'], 'type' => ['<',  3]])->field('devid, type')->select();
         $user = $user + ['devList' => $devs];
         return ['msg' => 'success', 'user' => $user];
 
+    }
+    public function deleteUser(Request $request) {
+        $id = $request->param('id');
+        if (empty($id)) return ['msg' => '请求参数为空'];
+        $isDelete = Db::table('users')->where('id', $id)->delete();
+        if ($isDelete) return ['msg' => 'success'];
+        else return ['msg' => "删除失败"];
     }
     public function updateUserName(Request $request) {
         $userid = $request->request('userid');
@@ -131,8 +134,11 @@ class UserController extends Controller
     public function updateUserPwd(Request $request){
         $password = $request->param('password');
         if($password){
-            $bool = Db::table('users')->where('userid', $request->param('userid'))
-                ->update(['password' => $password]);
+            $random = (string) round(mt_rand()/mt_getrandmax(), 12);
+            $salt = substr(sha1($random), 0 , 5);
+            $saltpassword = 'sha1$' . $salt . '$' . sha1($salt . $password);
+            $bool = Db::table('users')->where('name', $request->param('tel_num'))
+                ->update(['password' => $saltpassword]);
             if($bool) return ['msg' => 'success'];
             else return ['msg' => '密码更新失败'];
         }else return ['msg' => '密码参数不存在'];

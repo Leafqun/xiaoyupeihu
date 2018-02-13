@@ -18,16 +18,17 @@ Route::any('/updateName', 'LoginController/updateName');
 Route::any('/login','UserController/login');
 Route::get('/logout','UserController/logout');
 Route::any('/register','UserController/register');
-Route::post('users/updateUserPic','UserController/updateUserPic');
+Route::any('users/deleteUser','UserController/deleteUser');
+Route::any('users/updateUserPic','UserController/updateUserPic');
 Route::any('users/updateUserName','UserController/updateUserName');
-Route::post('users/updateUserPwd','UserController/updateUserPwd');
-Route::post('users/updateUserPhone','UserController/updateUserPhone');
+Route::any('users/updateUserPwd','UserController/updateUserPwd');
+Route::any('users/updateUserPhone','UserController/updateUserPhone');
 Route::get('users/getUserInfo','UserController/getUserInfo');
 Route::get('users/getAllUsers','UserController/getAllUsers');
 Route::get('users/getAllGroupFromUser','UserController/getAllGroupFromUser');
 Route::get('users/getAllFriendFromUser','UserController/getAllFriendFromUser');
-Route::post('users/addFriend', 'UserController/addFriend');
-Route::post('users/deleteFriend', 'UserController/deleteFriend');
+Route::any('users/addFriend', 'UserController/addFriend');
+Route::any('users/deleteFriend', 'UserController/deleteFriend');
 Route::get('users/getUserTotalNum','UserController/getUserTotalNum');
 Route::get('users/getActiveUserTotalNum','UserController/getActiveUserTotalNum');
 Route::get('users/getActiveUserCityStatistics','UserController/getActiveUserCityStatistics');
@@ -45,7 +46,7 @@ Route::get('posts/getPostList', 'PostController/getPostList');
 Route::any('posts/getPostListFromUser', 'PostController/getPostListFromUser');
 Route::get('posts/getPostInfo', 'PostController/getPostInfo');
 Route::get('posts/getPostPic', 'PostController/getPostPic');
-Route::post('posts/insertPost', 'PostController/insertPost');
+Route::any('posts/insertPost', 'PostController/insertPost');
 Route::any('posts/deletePost', 'PostController/deletePost');
 Route::any('posts/getPostListFromFriends','PostController/getPostListFromFriends');
 Route::any('posts/getPostListFromGroup','PostController/getPostListFromGroup');
@@ -63,6 +64,8 @@ Route::any('devs/isDevBinded', 'DevController/isDevBinded');
 Route::any('devs/updateDevInfo', 'DevController/updateDevInfo');
 Route::any('devs/deleteDev', 'DevController/deleteDev');
 Route::any('devs/getDevList', 'DevController/getDevList');
+Route::any('devs/getDevIdFromId', 'DevController/getDevIdFromId');
+Route::any('devs/getUserDevid', 'DevController/getUserDevid');
 Route::get('devs/getDevInfo', 'DevController/getDevInfo');
 Route::get('devs/getDevTotalNum', 'DevController/getDevTotalNum');
 
@@ -70,6 +73,7 @@ Route::get('comments/getCommentList', 'CommentController/getCommentList');
 Route::get('comments/insertComment', 'CommentController/insertComment');
 
 Route::any('alarm/getAlarmList', 'AlarmController/getAlarmList');
+Route::any('alarm/getMonthAlarmList', 'AlarmController/getMonthAlarmList');
 
 return [
     '__pattern__' => [

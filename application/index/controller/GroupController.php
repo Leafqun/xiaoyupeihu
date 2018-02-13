@@ -63,6 +63,11 @@ class GroupController extends Controller
                 // 设置集群号
                 $cluster_id = Db::table('users')->where('id', $lord_id)->find();
                 Db::table('users')->where('id', $id)->update(['cluster_id' => $cluster_id['cluster_id'], 'unit' => $cluster_id['cluster_id']]);
+                // 创建用户设备号
+                $total = Db::table('groups')->where('groupid', $groupid)->field('total')->find();
+                $num = (string)(10 + $total['total'] - 1);
+                $user_devid = substr($devid, 0, 8) .$num .substr($devid, 10, 8);
+                Db::table('devs')->insert(['user_id' => $id, 'groupid' => $groupid, 'devid' => $user_devid, 'name' => $user_devid, 'password' => '123456', 'create_time' => date('Y-m-d H:i:s', time()), 'type' => 3]);
                 return ['msg' => 'success'];
             }
             else return ['msg' => '群组人数未更新'];

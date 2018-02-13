@@ -49,4 +49,8 @@ class AlarmController extends Controller
         } catch (DbException $e) {
         }
     }
+    public function getMonthAlarmList(Request $request) {
+        $alarmList = Db::table('alarm')->limit(1000)->order('create_time', 'desc')->select();
+        return ['alarmList' => $alarmList];
+    }
 }
